@@ -1,0 +1,35 @@
+{
+  "light": {
+    "bg": "#FFFFFF",
+    "main_header": ["LibertinusMono", "", 50, "#0F172A"],
+    "report_name": ["Roboto", "B", 25, "#1D4ED8"],
+    "h3": ["Roboto", "B", 18, "#111827"],
+    "h4": ["RobotoMedium", "", 14, "#374151"],
+    "body": ["Roboto", "", 12, "#111827"],
+    "secondary": ["Roboto", "", 10, "#4B5563"],
+    "divider": ["Roboto", "", 10, "#6B7280"],
+    "code": ["FiraCode", "", 10, "#0F172A", "#F3F4F6"]
+  },
+  "dark": {
+    "bg": "#0A0F1F",
+    "main_header": ["LibertinusMono", "", 50, "#F9FAFB"],
+    "report_name": ["Roboto", "B", 25, "#38BDF8"],
+    "h3": ["Roboto", "B", 18, "#E5E7EB"],
+    "h4": ["RobotoMedium", "", 14, "#9CA3AF"],
+    "body": ["Roboto", "", 12, "#E5E7EB"],
+    "secondary": ["Roboto", "", 10, "#9CA3AF"],
+    "divider": ["Roboto", "", 10, "#6B7280"],
+    "code": ["FiraCode", "", 10, "#E5E7EB", "#111827"]
+  },
+  "print": {
+    "bg": "#FFFFFF",
+    "main_header": ["LibertinusMono", "", 50, "#000000"],
+    "report_name": ["Roboto", "B", 25, "#000000"],
+    "h3": ["Roboto", "B", 18, "#000000"],
+    "h4": ["RobotoMedium", "", 14, "#222222"],
+    "body": ["Roboto", "", 12, "#000000"],
+    "secondary": ["Roboto", "", 10, "#444444"],
+    "divider": ["Roboto", "", 10, "#666666"],
+    "code": ["FiraCode", "", 10, "#000000", "#FFFFFF"]
+  }
+}

@@ -14,18 +14,21 @@ def resource_path(relative_path: str) -> str:
 
 data_path = resource_path("../data")
 CACHE_FILE = os.path.join(data_path, "cf_cache.json")
-# CACHE_FILE = "cf_cache.json"
 SLEEP_SECONDS = 2
 MAX_RETRIES = 3
 RETRY_BACKOFF = 5
 
 REQUIRED_FIELDS = {
+    "contest_id",
+    "index",
+    "rating",
     "title",
+    "time_limit",
+    "memory_limit",
     "statement",
     "input",
     "output",
-    "time_limit",
-    "memory_limit",
+    "url",
 }
 
 scraper = cloudscraper.create_scraper(
@@ -33,81 +36,97 @@ scraper = cloudscraper.create_scraper(
 )
 
 
-def lookup_or_scrape(problem_key: str) -> dict:
-    """
-    Checks cache for a Codeforces problem.
-    - Returns the cached problem if present and valid.
-    - Otherwise scrapes the problem, updates cache, and returns the dict.
-    Returns None if scraping fails after retries.
-    """
-    # Load cache
-    cache = {}
+def load_cache() -> dict:
     if os.path.exists(CACHE_FILE):
         with open(CACHE_FILE, "r", encoding="utf-8") as f:
-            cache = json.load(f)
+            return json.load(f)
+    return {}
 
-    # Return cached problem if valid
-    if problem_key in cache:
-        entry = cache[problem_key]
-        if all(
-            field in entry and entry[field].strip() != "" for field in REQUIRED_FIELDS
-        ):
-            return entry
 
-    # Parse contest_id and index
+def save_cache(cache: dict) -> None:
+    tmp = CACHE_FILE + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(cache, f, indent=2, ensure_ascii=False)
+    os.replace(tmp, CACHE_FILE)
+
+
+def get_problem_rating(problem_key: str) -> int | None:
+    api_url = "https://codeforces.com/api/problemset.problems"
+    r = scraper.get(api_url, timeout=30)
+    data = r.json()
+
+    for p in data["result"]["problems"]:
+        key = f"{p.get('contestId')}{p.get('index')}"
+        if key == problem_key and "rating" in p:
+            return p["rating"]
+
+    return None
+
+
+def is_valid_entry(entry: dict) -> bool:
+    for field in REQUIRED_FIELDS:
+        if field not in entry:
+            return False
+        if entry[field] is None:
+            return False
+        if isinstance(entry[field], str) and entry[field].strip() == "":
+            return False
+    return True
+
+
+def lookup_or_scrape(problem_key: str) -> dict | None:
+    cache = load_cache()
+
+    if problem_key in cache and is_valid_entry(cache[problem_key]):
+        return cache[problem_key]
+
     contest_id = "".join(filter(str.isdigit, problem_key))
     index = "".join(filter(str.isalpha, problem_key)).upper()
     url = f"https://codeforces.com/contest/{contest_id}/problem/{index}"
+
+    rating = get_problem_rating(problem_key)
+    if rating is None:
+        return None  # rating is mandatory
 
     for attempt in range(1, MAX_RETRIES + 1):
         try:
             r = scraper.get(url, timeout=20)
             if r.status_code != 200:
-                raise Exception(f"Blocked ({r.status_code})")
+                raise Exception("Blocked")
 
             soup = BeautifulSoup(r.text, "html.parser")
-            title = soup.find("div", class_="title")
+
+            statement_div = soup.find("div", class_="problem-statement")
+            title_div = soup.find("div", class_="title")
             time_limit = soup.find("div", class_="time-limit")
             memory_limit = soup.find("div", class_="memory-limit")
-            statement = soup.find("div", class_="problem-statement")
 
-            if not title or not statement:
-                raise Exception("Problem HTML structure not found")
+            if not statement_div or not title_div:
+                raise Exception("HTML structure changed")
 
-            description = statement.find("div", recursive=False).get_text(
-                "\n", strip=True
-            )
-            input_spec = statement.find("div", class_="input-specification")
-            output_spec = statement.find("div", class_="output-specification")
+            input_spec = statement_div.find("div", class_="input-specification")
+            output_spec = statement_div.find("div", class_="output-specification")
 
             problem_data = {
                 "contest_id": int(contest_id),
                 "index": index,
-                "title": title.get_text(strip=True),
-                "time_limit": (
-                    time_limit.get_text(strip=True).replace("Time limit:", "").strip()
-                    if time_limit
-                    else ""
-                ),
+                "rating": rating,
+                "title": title_div.get_text(strip=True),
+                "time_limit": time_limit.get_text(strip=True) if time_limit else "",
                 "memory_limit": (
-                    memory_limit.get_text(strip=True)
-                    .replace("Memory limit:", "")
-                    .strip()
-                    if memory_limit
-                    else ""
+                    memory_limit.get_text(strip=True) if memory_limit else ""
                 ),
-                "statement": description,
+                "statement": statement_div.get_text("\n", strip=True),
                 "input": input_spec.get_text("\n", strip=True) if input_spec else "",
                 "output": output_spec.get_text("\n", strip=True) if output_spec else "",
                 "url": url,
             }
 
-            # Save to cache
+            if not is_valid_entry(problem_data):
+                return None
+
             cache[problem_key] = problem_data
-            tmp = CACHE_FILE + ".tmp"
-            with open(tmp, "w", encoding="utf-8") as f:
-                json.dump(cache, f, indent=2, ensure_ascii=False)
-            os.replace(tmp, CACHE_FILE)
+            save_cache(cache)
 
             time.sleep(SLEEP_SECONDS)
             return problem_data
@@ -115,10 +134,4 @@ def lookup_or_scrape(problem_key: str) -> dict:
         except Exception:
             if attempt == MAX_RETRIES:
                 return None
-            else:
-                time.sleep(RETRY_BACKOFF)
-
-
-if __name__ == "__main__":
-    problem = lookup_or_scrape("116A")
-    print(problem)
+            time.sleep(RETRY_BACKOFF)

@@ -137,18 +137,6 @@ def getProblemAnalysis(problem: str):
         json.dump(final_response, file, indent=4)
 
 
-# def getProblemFromCache(path: str):
-#     with open(path, "r", encoding="utf-8") as rf:
-#         data = json.load(rf)
-
-#     data_path = resource_path("../data")
-#     os.makedirs(data_path, exist_ok=True)
-
-#     response_json_path = os.path.join(data_path, "response.json")
-#     with open(response_json_path, "w", encoding="utf-8") as file:
-#         json.dump(data, file, indent=4)
-
-
 def write_solution(write_file_path: str, problem: str):
     cache_path = resource_path("../data/cache")
     cache_file_path = os.path.join(cache_path, f"{problem.strip().lower()}.txt")

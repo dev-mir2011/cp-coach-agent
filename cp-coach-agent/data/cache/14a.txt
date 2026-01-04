@@ -1,144 +1,127 @@
 {
     "analysis": {
         "hints": {
-            "level1": "The problem asks for the smallest rectangle that encloses all shaded squares ('*'). Think about what defines such a rectangle.",
-            "level2": "The minimum bounding rectangle is defined by the minimum and maximum row and column indices of all shaded squares.",
-            "level3": "Iterate through the entire grid. As you encounter each shaded square, keep track of the smallest row index, largest row index, smallest column index, and largest column index where '*' characters appear.",
-            "level4": "Initialize min_row to a large value (e.g., N), max_row to a small value (e.g., -1), min_col to a large value (e.g., M), and max_col to a small value (e.g., -1). Update these values whenever a '*' is found.",
-            "level5": "After determining the final min_row, max_row, min_col, and max_col, iterate through the grid again, but only within these calculated bounds, and print the characters."
+            "level1": "Think about what defines a rectangle. What are its essential dimensions or coordinates?",
+            "level2": "To find the smallest rectangle that *contains* all shaded squares, what extreme positions (row/column indices) of the shaded squares would you need to know?",
+            "level3": "How can you efficiently find the minimum row, maximum row, minimum column, and maximum column indices that contain at least one '*' character?",
+            "level4": "Once you have the overall top-most, bottom-most, left-most, and right-most coordinates of any shaded square, how can you extract and print the sub-grid corresponding to this bounding box?",
+            "level5": "N/A"
         },
         "summary": {
-            "problem_statement": "Bob has a sheet of paper with 'n' lines and 'm' columns. Some squares are shaded ('*'), others are not ('.'). He wants to cut out the smallest rectangle that contains all shaded squares. You need to output this rectangle. It's guaranteed that at least one square is shaded.",
+            "problem_statement": "Bob has a rectangular grid of 'n' rows and 'm' columns, where some squares are shaded ('*') and others are not ('.'). He wants to cut out the smallest possible rectangular piece of paper that contains all of his shaded squares. The rectangle's sides must be parallel to the grid's sides. The cost is proportional to the area, so minimizing cost means minimizing the area of the cut-out rectangle. The task is to output this minimum-cost rectangle.",
             "input_format": {
-                "description": "The first line contains two integers N and M, representing the number of lines and columns respectively. The following N lines each contain M characters, describing the grid. '.' denotes a non-shaded square, '*' denotes a shaded square.",
+                "description": "The input begins with two integers, 'n' and 'm', representing the number of rows and columns, respectively. These are followed by 'n' lines, each containing 'm' characters. Each character is either '.' (unshaded) or '*' (shaded). It is guaranteed that there is at least one shaded square.",
                 "structure": [
-                    {
-                        "type": "integer",
-                        "name": "n"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "m"
-                    },
-                    {
-                        "type": "array",
-                        "name": "grid",
-                        "elements": {
-                            "type": "string",
-                            "length": "m"
-                        },
-                        "length": "n"
-                    }
+                    "n (int), m (int)",
+                    "grid[0][0]...grid[0][m-1] (char array)",
+                    "... (n lines)",
+                    "grid[n-1][0]...grid[n-1][m-1] (char array)"
                 ]
             },
             "output_format": {
-                "description": "Output the characters that form the smallest rectangle containing all shaded squares. The output should be exactly this subgrid, with each row on a new line.",
+                "description": "Output the smallest rectangular sub-grid that contains all shaded squares. The output should consist of (max_r - min_r + 1) lines, each containing (max_c - min_c + 1) characters, without any extra spaces or newlines.",
                 "structure": [
-                    {
-                        "type": "grid",
-                        "description": "The subgrid (characters) corresponding to the bounding box of all '*' characters."
-                    }
+                    "row_output[0]",
+                    "row_output[1]",
+                    "..."
                 ]
             },
             "constraints": {
                 "time_limit": "1 second",
                 "memory_limit": "64 megabytes",
                 "bounds": [
-                    {
-                        "variable": "n",
-                        "range": "[1, 50]"
-                    },
-                    {
-                        "variable": "m",
-                        "range": "[1, 50]"
-                    },
-                    {
-                        "variable": "grid_characters",
-                        "values": [
-                            "'.'",
-                            "'*'"
-                        ]
-                    },
-                    {
-                        "variable": "shaded_squares",
-                        "condition": "at least one shaded square is guaranteed"
-                    }
+                    "1 \u2264 n, m \u2264 50"
                 ]
             },
-            "sample_cases": [],
+            "sample_cases": [
+                {
+                    "input": "6 7\n.......\n..***..\n..*....\n..***..\n..*....\n..***..",
+                    "output": "***\n*..\n***\n*..\n***"
+                },
+                {
+                    "input": "3 3\n***\n*.*\n***",
+                    "output": "***\n*.*\n***"
+                }
+            ],
             "key_requirements": [
-                "Read N and M and the grid.",
-                "Find the minimum row index, maximum row index, minimum column index, and maximum column index among all '*' characters.",
-                "Print only the characters within this calculated bounding box."
+                "Find the minimum bounding rectangle that encloses all '*' characters.",
+                "Rectangle sides must be parallel to the sheet's sides.",
+                "Output the sub-grid corresponding to this rectangle."
             ]
         },
         "analysis": {
-            "key_observation": "The smallest rectangle enclosing all shaded squares is uniquely determined by the top-most, bottom-most, left-most, and right-most occurrences of any shaded square.",
+            "key_observation": "The minimum bounding rectangle for a set of points (in this case, shaded squares) is defined by the minimum and maximum row indices, and the minimum and maximum column indices, of all points in the set. Any shaded square must be within this rectangle, and any smaller rectangle would exclude at least one shaded square.",
             "edge_cases": [
-                "A single '*' in the grid: The bounding box will be 1x1, containing just that '*'.",
-                "All characters are '*': The output will be the entire input grid.",
-                "All '*' characters are on a single row or column: The resulting rectangle will have a height or width of 1.",
-                "The problem guarantees at least one '*' character, so the bounding box will always be valid (non-empty)."
+                "All shaded squares are in a single row.",
+                "All shaded squares are in a single column.",
+                "Only one shaded square exists (guaranteed at least one).",
+                "All squares in the grid are shaded."
             ],
-            "naive_failures": [
-                "Trying all possible subrectangles: A grid of N*M can have O((N*M)^2) subrectangles. For each, checking if it contains all '*' takes O(N*M). This would be O((NM)^3) which is too slow for N, M = 50."
-            ],
+            "naive_failures": [],
             "problem_category": {
-                "primary": "Grid",
+                "primary": "Ad-hoc",
                 "secondary": [
-                    "Implementation",
-                    "Basic Geometry"
+                    "Grid Traversal",
+                    "Array Manipulation"
                 ],
                 "subcategory": "Bounding Box"
             },
             "complexity_analysis": {
                 "constraints": {
-                    "N": 50,
-                    "M": 50
+                    "n": 50,
+                    "m": 50
                 },
                 "expected_time": "O(N*M)",
                 "expected_space": "O(N*M)"
             }
         },
         "solution": {
-            "language": "C++",
-            "approach": "The solution involves two main passes over the grid. First, read the grid and simultaneously identify the extreme coordinates of all '*' characters. Initialize `min_r = N`, `max_r = -1`, `min_c = M`, `max_c = -1`. For each '*' found at `(i, j)`, update `min_r = min(min_r, i)`, `max_r = max(max_r, i)`, `min_c = min(min_c, j)`, `max_c = max(max_c, j)`. After iterating through the entire grid, these variables will hold the top, bottom, left, and right bounds. Second, iterate from `row = min_r` to `max_r` and `col = min_c` to `max_c`, printing the character `grid[row][col]`, followed by a newline at the end of each row.",
-            "time_complexity": "O(N*M) - One pass to find the bounding coordinates, another pass to print the subgrid. Each cell is visited a constant number of times.",
-            "space_complexity": "O(N*M) - To store the input grid in memory.",
+            "language": "cpp",
+            "approach": "The most straightforward approach is to iterate through the entire grid to find the extreme coordinates (minimum row, maximum row, minimum column, maximum column) of all shaded squares. Once these four values are found, we can iterate again, this time only printing the characters within the identified bounding box.",
+            "time_complexity": "O(N*M)",
+            "space_complexity": "O(N*M)",
             "key_insights": [
-                "The bounding box is determined by the minimum and maximum row/column indices of '*' characters.",
-                "A single pass can find these extreme coordinates.",
-                "A second pass can print the result within these bounds."
+                "The bounding box is determined by the global minimum/maximum row/column indices of all shaded cells.",
+                "A single pass can identify these extreme indices."
             ],
-            "code": "#include <iostream>\n#include <vector>\n#include <string>\n#include <algorithm> // For std::min and std::max\n\nint main() {\n    // Optimize C++ standard streams for competitive programming\n    std::ios_base::sync_with_stdio(false);\n    std::cin.tie(NULL);\n\n    int n, m;\n    std::cin >> n >> m;\n\n    // Store the grid as a vector of strings\n    std::vector<std::string> grid(n);\n\n    // Initialize bounding box coordinates\n    // min_r, min_c should be initialized to values larger than any possible index\n    // max_r, max_c should be initialized to values smaller than any possible index\n    int min_r = n, max_r = -1;\n    int min_c = m, max_c = -1;\n\n    // First pass: Read grid and find bounding box of '*' characters\n    for (int i = 0; i < n; ++i) {\n        std::cin >> grid[i]; // Read the entire row as a string\n        for (int j = 0; j < m; ++j) {\n            if (grid[i][j] == '*') {\n                // Update min/max row and column indices if a '*' is found\n                min_r = std::min(min_r, i);\n                max_r = std::max(max_r, i);\n                min_c = std::min(min_c, j);\n                max_c = std::max(max_c, j);\n            }\n        }\n    }\n\n    // Problem guarantees at least one shaded square, so min_r/max_r/min_c/max_c will be valid.\n\n    // Second pass: Print the subgrid defined by the calculated bounding box\n    for (int i = min_r; i <= max_r; ++i) {\n        for (int j = min_c; j <= max_c; ++j) {\n            std::cout << grid[i][j];\n        }\n        std::cout << \"\\n\"; // Newline after each row of the subgrid\n    }\n\n    return 0;\n}",
+            "code": "#include <iostream>\n#include <vector>\n#include <string>\n#include <algorithm>\n\nint main() {\n    std::ios_base::sync_with_stdio(false);\n    std::cin.tie(NULL);\n\n    int n, m;\n    std::cin >> n >> m;\n\n    std::vector<std::string> grid(n);\n    int min_r = n, max_r = -1;\n    int min_c = m, max_c = -1;\n\n    for (int i = 0; i < n; ++i) {\n        std::cin >> grid[i];\n        for (int j = 0; j < m; ++j) {\n            if (grid[i][j] == '*') {\n                min_r = std::min(min_r, i);\n                max_r = std::max(max_r, i);\n                min_c = std::min(min_c, j);\n                max_c = std::max(max_c, j);\n            }\n        }\n    }\n\n    // As per problem guarantee, at least one '*' exists,\n    // so min_r, max_r, min_c, max_c will be valid indices.\n\n    for (int i = min_r; i <= max_r; ++i) {\n        for (int j = min_c; j <= max_c; ++j) {\n            std::cout << grid[i][j];\n        }\n        std::cout << \"\\n\";\n    }\n\n    return 0;\n}\n",
             "explanation": {
                 "algorithm_steps": [
-                    "Read the dimensions `N` and `M` of the grid.",
-                    "Declare a 2D data structure (e.g., `std::vector<std::string>`) to store the grid.",
-                    "Initialize `min_r` to `N`, `max_r` to `-1`, `min_c` to `M`, and `max_c` to `-1`. These will store the top-most, bottom-most, left-most, and right-most row/column indices of shaded cells, respectively. The initial values ensure that the first '*' encountered will correctly set these bounds.",
-                    "Iterate through each cell `(i, j)` of the `N x M` grid:",
-                    "  Read the character for the current cell.",
-                    "  If the character is `'*'` (a shaded square):",
-                    "    Update `min_r = std::min(min_r, i)`.",
-                    "    Update `max_r = std::max(max_r, i)`.",
-                    "    Update `min_c = std::min(min_c, j)`.",
-                    "    Update `max_c = std::max(max_c, j)`.",
-                    "After the first complete pass, `min_r`, `max_r`, `min_c`, and `max_c` will contain the exact boundaries of the smallest rectangle enclosing all shaded squares.",
-                    "Perform a second pass to print the resulting subgrid:",
-                    "  Iterate `i` from `min_r` to `max_r` (inclusive).",
-                    "  For each such `i`, iterate `j` from `min_c` to `max_c` (inclusive).",
-                    "  Print the character `grid[i][j]`.",
-                    "  After printing all characters for a row `i`, print a newline character to move to the next line in the output."
+                    "Initialize `min_r` to `n` (a value greater than any possible row index), `max_r` to `-1` (a value smaller than any possible row index), `min_c` to `m` (a value greater than any possible column index), and `max_c` to `-1` (a value smaller than any possible column index). These initial values ensure that the first `*` encountered will correctly set the minimums and maximums.",
+                    "Read the dimensions `n` and `m` from the first line of input.",
+                    "Read the entire grid of characters into a `std::vector<std::string>` (or a 2D character array) for easy access.",
+                    "Iterate through each cell `(i, j)` of the grid, where `i` goes from `0` to `n-1` and `j` goes from `0` to `m-1`.",
+                    "If a cell `grid[i][j]` contains a `*` (indicating a shaded square):",
+                    "  Update `min_r = std::min(min_r, i)` to track the smallest row index where a `*` is found.",
+                    "  Update `max_r = std::max(max_r, i)` to track the largest row index where a `*` is found.",
+                    "  Update `min_c = std::min(min_c, j)` to track the smallest column index where a `*` is found.",
+                    "  Update `max_c = std::max(max_c, j)` to track the largest column index where a `*` is found.",
+                    "After iterating through the entire grid, `min_r`, `max_r`, `min_c`, and `max_c` will define the exact bounding box (top, bottom, left, right edges) of all shaded squares.",
+                    "Finally, iterate from `i = min_r` to `max_r` (inclusive) for the rows of the output rectangle.",
+                    "For each such row `i`, iterate from `j = min_c` to `max_c` (inclusive) for the columns of the output rectangle.",
+                    "Print the character `grid[i][j]`.",
+                    "After printing all characters for a specific row of the output rectangle, print a newline character to move to the next line for the subsequent row."
                 ],
                 "edge_cases_handled": [
-                    "**Single Shaded Square:** The `min_r`, `max_r`, `min_c`, `max_c` variables will all converge to the single row/column index of that '*' square, correctly printing a 1x1 rectangle.",
-                    "**All Shaded Squares:** If the entire grid is shaded, the bounds will remain `min_r = 0`, `max_r = N-1`, `min_c = 0`, `max_c = M-1`, resulting in the entire grid being printed.",
-                    "**Shaded Squares Form a Line:** If all '*' are on a single row (e.g., `min_r == max_r`) or a single column (e.g., `min_c == max_c`), the loops will correctly iterate for a single row/column, printing a 1-unit thick rectangle.",
-                    "**Guaranteed At Least One Shaded Square:** This constraint simplifies the problem by ensuring that `min_r`, `max_r`, `min_c`, `max_c` will always be updated from their initial sentinel values, and thus, a valid (non-empty) rectangle will always be formed and printed."
+                    "**Single shaded square:** If only one '*' exists, `min_r`, `max_r`, `min_c`, `max_c` will all converge to its coordinates, and a 1x1 rectangle will be printed, correctly fulfilling the requirement.",
+                    "**All shaded squares in a single row/column:** The min/max logic naturally captures the extent of the shaded squares, correctly resulting in a rectangle with a height of 1 or a width of 1.",
+                    "**Full grid of shaded squares:** The min/max values will correctly be 0 and `n-1` for rows, and 0 and `m-1` for columns, leading to the entire grid being printed.",
+                    "**Guaranteed at least one shaded square:** The problem statement ensures this, meaning `min_r`, `max_r`, `min_c`, `max_c` will always be updated from their initial 'invalid' states to valid grid indices after the first scan."
                 ]
             },
-            "test_verification": {}
+            "test_verification": {
+                "sample1": {
+                    "input": "6 7\n.......\n..***..\n..*....\n..***..\n..*....\n..***..",
+                    "expected_output": "***\n*..\n***\n*..\n***",
+                    "manual_trace": "Grid (N=6, M=7):\n[0].......\n[1]..***..\n[2]..*....\n[3]..***..\n[4]..*....\n[5]..***..\n\nInitial: min_r=6, max_r=-1, min_c=7, max_c=-1\n\nScanning:\n(1,2) '*': min_r=1, max_r=1, min_c=2, max_c=2\n(1,3) '*': max_r=1, max_c=3\n(1,4) '*': max_r=1, max_c=4\n(2,2) '*': max_r=2, min_c=2\n(3,2) '*': max_r=3\n(3,3) '*': max_c=3\n(3,4) '*': max_c=4\n(4,2) '*': max_r=4\n(5,2) '*': max_r=5\n(5,3) '*': max_c=3\n(5,4) '*': max_c=4\n\nFinal values: min_r=1, max_r=5, min_c=2, max_c=4.\n\nPrinting subgrid from rows 1 to 5, columns 2 to 4:\ngrid[1][2..4] -> \"***\"\ngrid[2][2..4] -> \"*..\"\ngrid[3][2..4] -> \"***\"\ngrid[4][2..4] -> \"*..\"\ngrid[5][2..4] -> \"***\"\nOutput matches expected."
+                },
+                "sample2": {
+                    "input": "3 3\n***\n*.*\n***",
+                    "expected_output": "***\n*.*\n***",
+                    "manual_trace": "Grid (N=3, M=3):\n[0]***\n[1]*.*\n[2]***\n\nInitial: min_r=3, max_r=-1, min_c=3, max_c=-1\n\nScanning:\nFirst '*' at (0,0) sets: min_r=0, max_r=0, min_c=0, max_c=0\nAs scan continues, min_r will remain 0, max_r will become 2 (from row 2).\nmin_c will remain 0, max_c will become 2 (from col 2).\n\nFinal values: min_r=0, max_r=2, min_c=0, max_c=2.\n\nPrinting subgrid from rows 0 to 2, columns 0 to 2:\nThis is the entire grid.\nOutput matches expected."
+                }
+            }
         }
     },
-    "code": "#include <bits/stdc++.h>\n\nvoid fast_io() {\n    std::ios_base::sync_with_stdio(false);\n    std::cin.tie(NULL);\n}\n\nint main() {\n    fast_io();\n\n    int n, m;\n    std::cin >> n >> m;\n\n    std::vector<std::string> grid(n);\n    int min_row = n, max_row = -1;\n    int min_col = m, max_col = -1;\n\n    for (int i = 0; i < n; ++i) {\n        std::cin >> grid[i];\n        for (int j = 0; j < m; ++j) {\n            if (grid[i][j] == '*') {\n                min_row = std::min(min_row, i);\n                max_row = std::max(max_row, i);\n                min_col = std::min(min_col, j);\n                max_col = std::max(max_col, j);\n            }\n        }\n    }\n\n    for (int i = min_row; i <= max_row; ++i) {\n        for (int j = min_col; j <= max_col; ++j) {\n            std::cout << grid[i][j];\n        }\n        std::cout << \"\\n\";\n    }\n\n    return 0;\n}"
+    "code": "#include <bits/stdc++.h>\n\nint main() {\n    std::ios_base::sync_with_stdio(false);\n    std::cin.tie(NULL);\n\n    int n, m;\n    std::cin >> n >> m;\n\n    std::vector<std::string> grid(n);\n    for (int i = 0; i < n; ++i) {\n        std::cin >> grid[i];\n    }\n\n    int min_r = n;\n    int max_r = -1;\n    int min_c = m;\n    int max_c = -1;\n\n    for (int i = 0; i < n; ++i) {\n        for (int j = 0; j < m; ++j) {\n            if (grid[i][j] == '*') {\n                min_r = std::min(min_r, i);\n                max_r = std::max(max_r, i);\n                min_c = std::min(min_c, j);\n                max_c = std::max(max_c, j);\n            }\n        }\n    }\n\n    for (int i = min_r; i <= max_r; ++i) {\n        for (int j = min_c; j <= max_c; ++j) {\n            std::cout << grid[i][j];\n        }\n        std::cout << \"\\n\";\n    }\n\n    return 0;\n}"
 }
